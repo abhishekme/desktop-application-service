@@ -15,12 +15,12 @@ exports.getList = function(req, res) {
 };
 
 exports.create  = function(req, resp) {
-  var getData   = req.body || null;
+  var getData   = req.body || null;  
   console.log("Input: ",getData.length)
   if(typeof getData === 'object'){
      var getEmail   = getData.email || '';
      if(getEmail){
-         theModel.findAll({
+         theModel.findAll({  
            where: {
              email : getEmail
            }

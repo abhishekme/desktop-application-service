@@ -7,7 +7,7 @@ app.route('/user')
     .get(userController.getList)
     .delete(userController.delete)
     .put(userController.update)
-    .post(userController.create)  
+    .post(userController.create)    
 
 // Application Routes
 // :: User Routes
