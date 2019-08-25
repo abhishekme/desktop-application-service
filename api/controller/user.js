@@ -22,7 +22,7 @@ exports.create  = function(req, resp) {
      if(getEmail){
          theModel.findAll({  
            where: {
-             email : getEmail
+             email : getEmail  
            }
          }).then(result => {
            console.log('result status: ',result.length);
