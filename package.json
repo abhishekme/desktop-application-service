@@ -4,9 +4,11 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "npm run init-db && ./node_modules/nodemon/bin/nodemon.js server.js",
+    "start": "npm run init-db ",
+    "db:pre-migrate": "node create-db.js",
+    "db:migrate": "npm run db:pre-migrate && node_modules/.bin/sequelize db:migrate",
     "sequelize-skeleton": "./node_modules/sequelize-cli/lib/sequelize init:models; ./node_modules/sequelize-cli/lib/sequelize init:config",
-    "init-db": "cd DIR_WHERE_MYSQL_BIN_IS && echo 'DROP DATABASE IF EXISTS local-chat; CREATE DATABASE local-chat CHARACTER SET utf8 COLLATE utf8_general_ci' | ./mysql -u root && cd -"
+    "init-db": "cd DIR_WHERE_MYSQL_BIN_IS && echo 'DROP DATABASE IF EXISTS local-server; CREATE DATABASE local-server CHARACTER SET utf8 COLLATE utf8_general_ci' | ./mysql -u root && cd -"
   },
   "author": "Abhishek",
   "license": "ISC",

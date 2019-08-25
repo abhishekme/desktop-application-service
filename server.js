@@ -13,24 +13,3 @@ app.use(express.static("app/public"));
 routes(app,db); //register the route
 
 app.listen(8080, () => console.log("App listening on port 8080!"));
-
-//================================================================
-//---------------------Migration Start----------------------------
-//================================================================
-//CREATE Tables automatically in database - from existing models
-//Run Once on the server after UnComment and Comment
-//const faker             = require("faker");
-//const times             = require("lodash.times");
-/*db.sequelize.sync().then(() => {
-    //populate User table with dummy data if needed
-    //   db.user.bulkCreate(
-    //     times(10, () => ({
-    //       firstName: faker.name.firstName(),
-    //       lastName: faker.name.lastName()
-    //     }))
-    //   );    
-});*/
-//================================================================
-//---------------------Migration End------------------------------
-//Ref Link: https://sequelize.org/master/manual/migrations.html
-//================================================================

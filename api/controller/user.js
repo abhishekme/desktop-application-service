@@ -16,6 +16,7 @@ exports.getList = function(req, res) {
 
 exports.create  = function(req, resp) {
   var getData   = req.body || null;
+  console.log("Input: ",getData.length)
   if(typeof getData === 'object'){
      var getEmail   = getData.email || '';
      if(getEmail){
@@ -40,6 +41,10 @@ exports.create  = function(req, resp) {
           }
          });
      }
+  }
+  if(getData == null){
+    resp.json({ message: 'Body Empty',status : 0 });
+                return;
   } 
 };
 
@@ -57,15 +62,17 @@ exports.update = function(req, resp) {
     console.log('checking Email.....');
     theModel.findAll({
       where: 
-      { email: getEmail,
-        $and: { email: getId },
-        $gt: {email: getId}
-    } 
+      { email: getEmail } 
     }).then(result => {
-       console.log('CheckEmail !update: ', result);
+      var findRec = result.find(rec => rec.id != getId);
+      if(findRec != null){
+        resp.json({ message: 'Email Exists! please try another',status : 0,record: findRec }); 
+        return;
+      }
+      console.log('CheckEmail !update: ', result);
     });
   } 
-  return;  
+  //return;  
   theModel.update((req.body),
   {
     where: {
