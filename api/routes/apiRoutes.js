@@ -1,13 +1,17 @@
 'use strict'
 
+//const {check, validationResult} = require('express-validator/check');
 module.exports = function(app,db) {
     
 var userController = require('../controller/user');
 app.route('/user')
     .get(userController.getList)
     .delete(userController.delete)
-    .put(userController.update)
-    .post(userController.create)    
+    .put(
+        userController.update,
+    )        
+    .post(userController.validate('create'),userController.create)  
+    
 
 // Application Routes
 // :: User Routes
