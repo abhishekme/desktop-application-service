@@ -1,17 +1,20 @@
 'use strict'
 
 //const {check, validationResult} = require('express-validator/check');
-module.exports = function(app,db) {
-    
+module.exports = function(app, passport) {
 var userController = require('../controller/user');
+var authController = require('../controller/auth/authController');
+
+//------ User Signup Process -------
+//passport.authenticate('local-signup')
+app.route('/login')
+     .post(userController.validate('login'), userController.login)
+
 app.route('/user')
     .get(userController.getList)
     .delete(userController.delete)
-    .put(
-        userController.update,
-    )        
     .post(userController.validate('create'),userController.create)  
-    
+app.put('/user', userController.validate('update'),userController.update);
 
 // Application Routes
 // :: User Routes

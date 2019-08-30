@@ -1,48 +1,57 @@
 'use strict'
 
 //Get ORM object
+var userController = require('./user');
+var bCrypt = require('bcrypt-nodejs');
+var passport            = require('passport')
+
 const { body }              = require('express-validator');
 const { validationResult }  = require('express-validator');
 const Sequelize             = require('sequelize');
-const Op          = Sequelize.Op;
-const db          = require("../models");
-const theModel    = db.user; 
+const Op                    = Sequelize.Op;
+const db                    = require("../models");
+const theModel              = db.user; 
+const theContr              = userController;
 
 //-----------------------------------------------------------------------
 //---------------- API Required Field Validation ------------------------
 //-----------------------------------------------------------------------
 exports.validate = (method) => {
-  console.log('validation @ '+method);
-  switch (method) {    
-    case 'create' : {
-     return [ 
-        body('username', 'userName doesn\'t exists').exists(),
-        body('email', 'Invalid email').exists().isEmail(),
+  switch (method) {
+    case 'signup' : {
+      return [ 
         body('first_name', 'First name is required').exists(),
+        body('last_name', 'Last name is required').exists(),
+        body('username', 'UserName is required').exists(),
+        body('email', 'Invalid email').exists().isEmail(),
         body('password', 'Password is required').exists(),
        ]   
     }
-    case  'update' : {
+    case 'create' : {
+     return [ 
+        body('first_name', 'First name is required').exists(),
+        body('username', 'UserName is required').exists(),
+        body('email', 'Invalid email').exists().isEmail(),
+        body('password', 'Password is required').exists(),
+       ]   
+    }
+    case 'login' : {
       return [ 
-         body('username', 'userName doesn\'t exists').exists(),
          body('email', 'Invalid email').exists().isEmail(),
-         body('first_name', 'First name is required').exists(),
          body('password', 'Password is required').exists(),
+        ]   
+     }
+    case 'update' : {
+      return [ 
+         body('first_name', 'First name is required').exists(),
+         body('last_name', 'Last name is required').exists(),
+         body('username', 'UserName is required').exists(),
+         body('email', 'Invalid email').exists().isEmail(),
         ]   
      }
   }
 }
-//-----------------------------------------------------------------------
-//---------------- API Required Field Validation ------------------------
-//-----------------------------------------------------------------------
-
-//Add List with pagination limit
-exports.getList = function(req, res) {
-  theModel.findAll().then( (result) => res.json(result))
-};
-
-exports.create  = function(req, resp) {    
-  //Check validation input
+exports.apiValidation   = function(req,resp){
   const errors          = validationResult(req);
   var validationErr     = [];
   var validationErrMesg = [];
@@ -52,21 +61,90 @@ exports.create  = function(req, resp) {
         validationErr.push(error);
       }      
   });
+  console.log(validationErr);
   if(validationErr.length){
     validationErr.forEach(rec => {
        validationErrMesg.push({field: rec.param, message: rec.msg});
     })
     resp.status(422).json({ errors: validationErrMesg, status:0 });
-    return;
+    return false;
   }
+}
+//-----------------------------------------------------------------------
+//---------------- API Required Field Validation ------------------------
+//-----------------------------------------------------------------------
+
+exports.hashPassword  = function(password){
+  return bCrypt.hashSync(password, bCrypt.genSaltSync(8), null);
+}
+exports.isLoggedIn  = function (req, res, next) {
+      // if user is authenticated in the session, carry on 
+    if (req.isAuthenticated()){
+        res.json({ message: "Logged in", status:1 });
+        return;
+    }
+    res.json({ message: "Logged out", status:0 });
+    return;
+    //return next();
+    // if they aren't redirect them to the home page
+    //res.redirect('/');
+}
+
+
+//For User Signup
+exports.login  = function(req, resp){
+    var postBody  = req.body || nulll;
+    theContr.apiValidation(req, resp);
+    if(postBody.email != undefined && postBody.password != undefined){
+      if(postBody.email){
+        theModel.findOne({           
+          where: {
+           email: postBody.email
+         }
+        }).then(result => {
+            if(result === null || result === undefined){
+              resp.json({ message: 'Email Not Found',status : 0 });
+              return;
+            }
+            if(result.dataValues.id > 0){
+               var getRecord  = result;
+               var dbPassword = getRecord.password;
+               
+              if(!theModel.validPassword(postBody.password, dbPassword)){
+                resp.json({ message: 'Password wrong',status : 0 });
+                return;
+              }
+
+              if(theContr.isLoggedIn(req,resp)){
+                resp.json({ message: 'Logged in',status : 1 });
+                return;
+              }
+
+              resp.json({ message: 'Login success',status : 1 });
+              return;
+           }
+        });
+      }      
+    }
+}
+
+
+//Add List with pagination limit
+exports.getList = function(req, res) {
+  theModel.findAll().then( (result) => res.json(result))
+};
+
+exports.create  = function(req, resp) {    
+
+  //Fetch Methods Validation
+  theContr.apiValidation(req, resp);
 
   var getData   = req.body || null;
-
   if(typeof getData === 'object'){
      var getEmail       = getData.email || '';
      var getUserName    = getData.username;
      if(getEmail){
-         theModel.findAll({           
+         theModel.findOne({           
            where: {
             [Op.or]: [{email: getEmail}, {username: getUserName}]
           }
@@ -76,6 +154,10 @@ exports.create  = function(req, resp) {
              return;
            }
            if(!result.length){
+            if(getData.password != undefined){
+               var hashPassword = theContr.hashPassword(getData.password);
+               if(hashPassword) getData.password = hashPassword;
+            }
             theModel.create(req.body).then((insertRecord) => {
               if(insertRecord.dataValues.id != undefined &&  insertRecord.dataValues.id > 0){
                 resp.json({ message: 'Record Inserted!',status : 1, record: insertRecord });
@@ -87,28 +169,16 @@ exports.create  = function(req, resp) {
      }
      return;
   }
-  else{
-    resp.json({ message: 'Unhandled Exception,Validation Required[first_name,email,password,username] ',status : 0 });
-    return;
-  } 
 };
 
 exports.update = function(req, resp) {
-
-  const errors          = validationResult(req);
-  console.log('Update Validation ', errors);
-
-
+  //Fetch Methods Validation
+  theContr.apiValidation(req, resp);
+  var getData     = req.body || null;
   var getId       = req.body.id || 0;
   var getEmail    = req.body.email || '';
   var getUserName = req.body.username || '';
   delete req.body.id;
-
-  //Call validator
-  //validate('update');
-  //id: {$ne: getId}, 
-  //{[Op.or]: [{email: getEmail}, {username: getUserName}]}
-  //Sequelize.literal('id != ' + getId),
 
   if(!getId){
     resp.json({ message: 'ID Not Found',status : -1 }); 
@@ -116,58 +186,37 @@ exports.update = function(req, resp) {
   }
   else if(getEmail != null && getUserName != null){
 
-    theModel.findAll({ where: { 
+      theModel.findAll({ where: { 
                         [Op.or]: [
                           {email: getEmail}, {username: getUserName}
                         ], 
                         id:
-                          { [Op.ne] : 2}                        
+                          { [Op.ne] : getId}                        
                         }}).then(result => {
-      //console.log("Find Record: ", result);
       var findRec = result;
       if(findRec.length){
         resp.json({ message: 'Username/Email Exists! please try another',status : 0,record: findRec }); 
         return;
       }
       if(!findRec.length){
-        theModel.update((req.body),
+        if(getData.password != undefined){
+          var hashPassword = theContr.hashPassword(getData.password);
+          if(hashPassword) getData.password = hashPassword;
+       }
+        theModel.update(getData,
         {
           where: {
             id: getId
           }
         }).then((result) => {
-          if(result)
+          if(result){
             resp.json({ message: 'Record Updated!',status : result });
+          }
           else
             resp.json({ message: 'DB Update Error!',status : result });
           })
       }
     });
-
-    /*theModel.findAll({
-      where: 
-      { email: getEmail } 
-    }).then(result => {
-      console.log("GET Record: ", result);
-      var findRec = result.find(rec => rec.id != getId);
-      console.log("Find Record: ", findRec);
-      if(findRec != null){
-        resp.json({ message: 'Email Exists! please try another',status : 0,record: findRec }); 
-        return;
-      }if(findRec == undefined){
-        theModel.update((req.body),
-        {
-          where: {
-            id: getId
-          }
-        }).then((result) => {
-          if(result)
-            resp.json({ message: 'Record Updated!',status : result });
-          else
-            resp.json({ message: 'DB Update Error!',status : result });
-          })
-      }
-    });*/
   }   
   return;
 };
@@ -184,68 +233,3 @@ exports.delete = function(req, resp) {
         resp.json({ message: 'Record Already Deleted','status' : result });
   })
 };
-
-
-
-// var userController = {
-
-//   getList = () => function(req, resp){
-//     theModel.findAll().then( (result) => res.json(result))
-//   }
-
-// }
-// module.exports  = userController;
-
-
-// exports.getList = function(req, res) {
-//   if(!req.query.userId){
-//     res.status(400).send({ error:true, message: 'Please provide User ID [id]' });
-//   }
-//   User.getUserById(req.query.userId, function(err, User) {
-//     if (err)
-//       res.send(err);
-//     res.json(User);
-//   });
-// };
-
-//module.exports = (app,db) => {
-
-  //getList = () => function(req, resp){
-    //theModel.findAll().then( (result) => res.json(result))
-  //}
-
-  // app.get( "/user", (req, res) =>
-  //   theModel.findAll().then( (result) => res.json(result))
-  // );
-
-  // app.get( "/post/:id", (req, res) =>
-  //   db.post.findByPk(req.params.id).then( (result) => res.json(result))
-  // );
-
-  // app.post("/post", (req, res) => 
-  //   db.post.create({
-  //     title: req.body.title,
-  //     content: req.body.content
-  //   }).then( (result) => res.json(result) )
-  // );
-
-  // app.put( "/post/:id", (req, res) =>
-  //   db.post.update({
-  //     title: req.body.title,
-  //     content: req.body.content
-  //   },
-  //   {
-  //     where: {
-  //       id: req.params.id
-  //     }
-  //   }).then( (result) => res.json(result) )
-  // );
-
-  // app.delete( "/post/:id", (req, res) =>
-  //   db.post.destroy({
-  //     where: {
-  //       id: req.params.id
-  //     }
-  //   }).then( (result) => res.json(result) )
-  // );
-//}
