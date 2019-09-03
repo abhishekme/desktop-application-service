@@ -22,32 +22,9 @@ module.exports = (sequelize, DataTypes) => {
       city: DataTypes.STRING,
       profile_pic: DataTypes.TEXT
     },
-    
     {
-      tableName: 'user',
       freezeTableName: true,
-      /*hooks: {
-        beforeCreate: function(member, options) {
-          const SALT_FACTOR = 10;
-          console.log('#### ',member);
-          if (!member.changed('password')) {
-            return sequelize.Promise.reject("not modified");
-          }
-          
-          bcrypt.genSalt(SALT_FACTOR, function(err, salt) {
-            if (err) return sequelize.Promise.reject(err);
-  
-            bcrypt.hash(member.password, salt, null, function(err, hash) {
-              console.log('Hash creating...', member.password, " :: ", hash);
-              if (err) return sequelize.Promise.reject(err);
-              if(hash != null) member.password = hash; 
-              //member.setDataValue('password', hash);
-            });
-          });
-        }
-      }*/
-     }     
-  );
+    });
 
   // checking if password is valid
   User.validPassword = function(password, localPassword) {

@@ -1,9 +1,9 @@
 'use strict'
 
 //Get ORM object
-var userController = require('./user');
-var bCrypt = require('bcrypt-nodejs');
-var passport            = require('passport')
+var userController  = require('./user');
+var bCrypt          = require('bcrypt-nodejs');
+var passport        = require('passport')
 
 const { body }              = require('express-validator');
 const { validationResult }  = require('express-validator');
@@ -12,6 +12,10 @@ const Op                    = Sequelize.Op;
 const db                    = require("../models");
 const theModel              = db.user; 
 const theContr              = userController;
+
+var LocalStrategy = require('passport-local').Strategy;
+
+//console.log('"LocalStrategy: ', LocalStrategy);
 
 //-----------------------------------------------------------------------
 //---------------- API Required Field Validation ------------------------
@@ -93,8 +97,10 @@ exports.isLoggedIn  = function (req, res, next) {
 
 //For User Signup
 exports.login  = function(req, resp){
-    var postBody  = req.body || nulll;
+    var postBody  = req.body || null;
+    console.log(postBody);
     theContr.apiValidation(req, resp);
+    return;
     if(postBody.email != undefined && postBody.password != undefined){
       if(postBody.email){
         theModel.findOne({           
@@ -106,22 +112,54 @@ exports.login  = function(req, resp){
               resp.json({ message: 'Email Not Found',status : 0 });
               return;
             }
+            console.log('@User Get Data: ',result.dataValues);
             if(result.dataValues.id > 0){
                var getRecord  = result;
                var dbPassword = getRecord.password;
                
-              if(!theModel.validPassword(postBody.password, dbPassword)){
-                resp.json({ message: 'Password wrong',status : 0 });
-                return;
-              }
+              // if(!theModel.validPassword(postBody.password, dbPassword)){
+              //   resp.json({ message: 'Password wrong',status : 0 });
+              //   return;
+              // }
 
-              if(theContr.isLoggedIn(req,resp)){
-                resp.json({ message: 'Logged in',status : 1 });
-                return;
-              }
+              // if(theContr.isLoggedIn(req,resp)){
+              //   resp.json({ message: 'Logged in',status : 1 });
+              //   return;
+              // }
 
-              resp.json({ message: 'Login success',status : 1 });
-              return;
+              console.log('@@@@@@@ Passport Auth');
+
+              passport.authenticate('local')(req, res, function () {
+                console.log('Passport Authenticate: ', req);
+
+
+
+              });
+
+
+              /*passport.use(new LocalStrategy({
+                usernameField: 'email',
+                passwordField: 'password'
+                },
+                function(email, password, cb) {
+                  console.log('@Entered Email: ',email, 'password: ', password);
+                  theModel.findOne({
+                        where: {
+                            email: email
+                        },
+                        raw : true
+                    }).then(function(user){
+                        console.log('Passport User: ', user);
+                        if (!user) { return cb(null, false); }
+                        if (user.password != password) { return cb(null, false); }
+                        return cb(null, user);
+                    }).catch(function(error){
+                        if (error) { return cb(null, error); }
+                    });
+                }));*/
+
+                resp.json({ message: 'Login success',status : 1 });
+                return;
            }
         });
       }      
@@ -131,6 +169,7 @@ exports.login  = function(req, resp){
 
 //Add List with pagination limit
 exports.getList = function(req, res) {
+  console.log('####### USER LIST ###############');
   theModel.findAll().then( (result) => res.json(result))
 };
 
@@ -186,36 +225,37 @@ exports.update = function(req, resp) {
   }
   else if(getEmail != null && getUserName != null){
 
-      theModel.findAll({ where: { 
-                        [Op.or]: [
-                          {email: getEmail}, {username: getUserName}
-                        ], 
-                        id:
-                          { [Op.ne] : getId}                        
-                        }}).then(result => {
-      var findRec = result;
-      if(findRec.length){
-        resp.json({ message: 'Username/Email Exists! please try another',status : 0,record: findRec }); 
-        return;
-      }
-      if(!findRec.length){
-        if(getData.password != undefined){
-          var hashPassword = theContr.hashPassword(getData.password);
-          if(hashPassword) getData.password = hashPassword;
-       }
-        theModel.update(getData,
-        {
-          where: {
-            id: getId
+      theModel.findAll(
+      { where: { 
+        [Op.or]: [
+          {email: getEmail}, {username: getUserName}
+        ], 
+        id:
+          { [Op.ne] : getId}                        
+        }}).then(result => {
+          var findRec = result;
+          if(findRec.length){
+            resp.json({ message: 'Username/Email Exists! please try another',status : 0,record: findRec }); 
+            return;
           }
-        }).then((result) => {
-          if(result){
-            resp.json({ message: 'Record Updated!',status : result });
+          if(!findRec.length){
+            if(getData.password != undefined){
+              var hashPassword = theContr.hashPassword(getData.password);
+              if(hashPassword) getData.password = hashPassword;
+            }
+            theModel.update(getData,
+            {
+              where: {
+                id: getId
+              }
+            }).then((result) => {
+              if(result){
+                resp.json({ message: 'Record Updated!',status : result });
+              }
+              else
+                resp.json({ message: 'DB Update Error!',status : result });
+              })
           }
-          else
-            resp.json({ message: 'DB Update Error!',status : result });
-          })
-      }
     });
   }   
   return;

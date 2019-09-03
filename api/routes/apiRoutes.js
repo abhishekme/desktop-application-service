@@ -1,6 +1,9 @@
 'use strict'
 
 //const {check, validationResult} = require('express-validator/check');
+//const passport = require('../../config/passport/passport');
+
+
 module.exports = function(app, passport) {
 var userController = require('../controller/user');
 var authController = require('../controller/auth/authController');
@@ -10,7 +13,7 @@ var authController = require('../controller/auth/authController');
 app.route('/login')
      .post(userController.validate('login'), userController.login)
 
-app.route('/user')
+app.route('/user', passport.authenticate('jwt', {session: false}))
     .get(userController.getList)
     .delete(userController.delete)
     .post(userController.validate('create'),userController.create)  
