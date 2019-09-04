@@ -15,37 +15,6 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
-// var SequelizeAuto = require('sequelize-auto');
-// //var auto = new SequelizeAuto(config.database, config.username, config.password);
-// //With options:
-// var auto = new SequelizeAuto(config.database, config.username, config.password, {
-//   host: config.host,
-//   dialect: config.dialect,
-//   directory: false, // prevents the program from writing to disk
-//   port: config.port,
-//   additional: {
-//       timestamps: false
-//   },
-//   tables: ['users']
-// });
-// auto.run(function (err) {
-//   if (err) throw err;
-//   //console.log(auto.tables); // table list
-//   //console.log(auto.foreignKeys); // foreign key list
-// });
-
-//With options:
-// var auto = new SequelizeAuto(config.database, config.username, config.password, {
-//     host: config.host,
-//     dialect: config.dialect,
-//     directory: false, // prevents the program from writing to disk
-//     port: config.port,
-//     additional: {
-//         timestamps: false
-//     },
-//     tables: ['users']
-// });
-
 fs
   .readdirSync(__dirname)
   .filter(file => {

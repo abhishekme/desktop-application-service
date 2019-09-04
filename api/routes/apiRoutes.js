@@ -1,33 +1,33 @@
 'use strict'
 
-//const {check, validationResult} = require('express-validator/check');
-//const passport = require('../../config/passport/passport');
-
-
-module.exports = function(app, passport) {
 var userController = require('../controller/user');
 var authController = require('../controller/auth/authController');
 
-//------ User Signup Process -------
-//passport.authenticate('local-signup')
+module.exports = function(app) {
+//Check Express Middleware
+function isAuth(req, res, next){
+    var curSession  = req.session;
+    if(curSession.userRec !=  undefined && curSession.userRec.id > 0){
+        res.json({message:"You are not logged in, please log in", status:0});
+    }
+    res.json({message:"You are not logged in, please log in", status:0});
+}
+//-------------------- AUTH Route ---------------------------------
+app.route('/logout')
+    .post(isAuth, userController.logout)
 app.route('/login')
      .post(userController.validate('login'), userController.login)
+//-------------------- AUTH Route ---------------------------------
 
-app.route('/user', passport.authenticate('jwt', {session: false}))
-    .get(userController.getList)
-    .delete(userController.delete)
+//-------------------- USER SECTION REST ROUTE ---------------------------------
+
+app.route('/user')
+    .get(isAuth, userController.getList)
+    .delete(isAuth, userController.delete)
     .post(userController.validate('create'),userController.create)  
-app.put('/user', userController.validate('update'),userController.update);
+app.put('/user', isAuth, userController.validate('update'),userController.update);
 
-// Application Routes
-// :: User Routes
-//app.route('/user')
-    //.get(userController(db).getList)
-    /*.post(userController.create_a_User)
-    .put(userController.update_a_User)
-    .delete(userController.delete_a_User);
-app.route('/user-by-email')
-    .get(userController.getUserByEmail)
-app.route('/user-by-id')
-    .get(userController.getUserById)*/
+//-------------------- DO OTHER SECTION ---------------------------------
+
+
 };

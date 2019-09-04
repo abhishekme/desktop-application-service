@@ -3,7 +3,6 @@
 const Promise = require("bluebird");
 const bcrypt = Promise.promisifyAll(require('bcrypt-nodejs'));
 
-
 module.exports = (sequelize, DataTypes) => {
   
   const User = sequelize.define('user', {
@@ -31,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
     return bcrypt.compareSync(password, localPassword);
  }
   
-
+ return User;
 
   //ORM Relations
   // Post.associate = (models) => {
@@ -86,6 +85,4 @@ module.exports = (sequelize, DataTypes) => {
   //   // });
   // });
   
-
-  return User;
 }
