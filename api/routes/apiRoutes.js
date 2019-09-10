@@ -2,15 +2,20 @@
 
 var userController = require('../controller/user');
 var authController = require('../controller/auth/authController');
+var constants      = require('../../config/constants');
+const variableDefined = constants[0].application;
 
 module.exports = function(app) {
 //Check Express Middleware
 function isAuth(req, res, next){
     var curSession  = req.session;
-    if(curSession.userRec !=  undefined && curSession.userRec.id > 0){
-        res.json({message:"You are not logged in, please log in", status:0});
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    if(curSession.userRec ===  undefined ){
+        res.json({message: variableDefined.variables.logged_out, status:0});
+    return;
     }
-    res.json({message:"You are not logged in, please log in", status:0});
+    return next();
 }
 //-------------------- AUTH Route ---------------------------------
 app.route('/logout')

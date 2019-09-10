@@ -2,15 +2,16 @@
 
 //Get ORM object
 var userController          = require('./user');
+var constants               = require('../../config/constants');
 var bCrypt                  = require('bcrypt-nodejs');
-const { body }              = require('express-validator');
-const { validationResult }  = require('express-validator');
+const { body,validationResult,check } = require('express-validator');
 const Sequelize             = require('sequelize');
 const Op                    = Sequelize.Op;
-const db                    = require("../models");
+const db                    = require('../models');
 const theModel              = db.user; 
 const theContr              = userController;
-
+const variableDefined       = constants[0].application;
+const fs                    = require('fs');
 //-----------------------------------------------------------------------
 //---------------- API Required Field Validation ------------------------
 //-----------------------------------------------------------------------
@@ -18,28 +19,36 @@ exports.validate = (method) => {
   switch (method) {
     case 'create' : {
      return [ 
-        body('first_name', 'First name is required').exists(),
-        body('username', 'UserName is required').exists(),
-        body('email', 'Invalid email').exists().isEmail(),
-        body('password', 'Password is required').exists(),
+        body('first_name', variableDefined.variables.first_name_required).exists(),
+        body('last_name', variableDefined.variables.last_name_required).exists(),
+        body('username', variableDefined.variables.username_required).exists(),
+        body('email', variableDefined.variables.email_required).exists().isEmail(),
+        body('password')  
+            .exists().withMessage(variableDefined.variables.password_required)
+            .isLength({ min: 5, max:15 }).withMessage(variableDefined.variables.password_strength_step1)
+            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,}$/).withMessage(variableDefined.variables.password_strength_step2),
        ]   
     }
     case 'login' : {
       return [ 
-         body('email', 'Invalid email').exists().isEmail(),
-         body('password', 'Password is required').exists(),
+         body('email', variableDefined.variables.email_required).exists().isEmail(),
+         body('password', variableDefined.variables.password_required).exists(),
         ]   
      }
     case 'update' : {
       return [ 
-         body('first_name', 'First name is required').exists(),
-         body('last_name', 'Last name is required').exists(),
-         body('username', 'UserName is required').exists(),
-         body('password', 'Password is required')
-            .isLength({min: 8, max:15})
-            .withMessage('Password should not be empty, minimum eight characters maximum fifteen, at least one letter, one number and one special character')
-            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d@$.!%*#?&]/),
-         body('email', 'Invalid email').exists().isEmail(),
+         body('first_name', variableDefined.variables.first_name_required).exists(),
+         body('last_name', variableDefined.variables.last_name_required).exists(),
+         body('username', variableDefined.variables.username_required).exists(),
+         body('password')  
+            .exists().withMessage(variableDefined.variables.password_required)
+            .isLength({ min: 5, max:15 }).withMessage(variableDefined.variables.password_strength_step1)
+            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,}$/).withMessage(variableDefined.variables.password_strength_step2),
+        //  body('password', 'Password is required')
+        //     .isLength({min: 8, max:15})
+        //     .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d@$.!%*#?&]/)
+        //     .withMessage('Password should not be empty, minimum eight characters maximum fifteen, at least one letter, one number and one special character'),
+         body('email', variableDefined.variables.email_required).exists().isEmail()
         ]   
      }
   }
@@ -75,10 +84,10 @@ exports.isLoggedIn  = function (req, res, next) {
       // if user is authenticated in the session, carry on 
     var curSession  = req.session;  
     if(curSession.userRec !=  undefined && curSession.userRec.id > 0){
-        res.json({ message: "Logged in", status:1 });
+        res.json({ message: variableDefined.variables.logged_in, status:1 });
         return next();
     }
-    res.json({ message: "Logged out", status:0 });
+    res.json({ message: variableDefined.variables.logged_out, status:0 });
     return;
 }
 /*-----------------------------------
@@ -89,9 +98,9 @@ exports.isLoggedIn  = function (req, res, next) {
 exports.logout   = function(req, res){
   req.session.destroy((err) => {
     if(err) {
-      return console.log({message:"Logout Unsuccessfull, please try again", status:0, error:err});
+      return console.log({message: variableDefined.variables.logout_unSuccess, status:0, error:err});
     }
-    res.json({message:"Logout successfully, please login again", status:0});    
+    res.json({message: variableDefined.variables.logout_success, status:0});    
   });
 }
 
@@ -117,7 +126,7 @@ exports.login  = function(req, resp){
             }
             if(result.dataValues.id > 0){
                var getRecord  = result;
-               var dbPassword = getRecord.password;
+               var dbPassword = getRecord.password;              
                
               if(!theModel.validPassword(postBody.password, dbPassword)){
                 resp.json({ message: 'Password wrong',status : 0 });
@@ -167,7 +176,7 @@ exports.create  = function(req, resp) {
           }
          }).then(result => {
            if(result != null){
-             resp.json({ message: 'Email/Username Exists',record : result });
+             resp.json({ message: variableDefined.variables.email_or_username_exists,record : result });
              return;
            }
            if(result === null){
@@ -196,19 +205,23 @@ exports.create  = function(req, resp) {
 exports.update = function(req, resp) {
   //Add required validation
   var validReturn   = theContr.apiValidation(req, resp);
-  if(validReturn) return;
+  if(validReturn)   return;
+
+  console.log("Constants: ", variableDefined);
+
   var getData     = req.body || null;
   var getId       = req.body.id || 0;
   var getEmail    = req.body.email || '';
   var getUserName = req.body.username || '';
+  //image upload processing
+  var getApiImage =  req.body.profile_pic || '';
   delete req.body.id;
 
   if(!getId){
-    resp.json({ message: 'ID Not Found',status : -1 }); 
+    resp.json({ message: variableDefined.variables.id_not_found,status : -1 }); 
     return;
   }
   else if(getEmail != null && getUserName != null){
-
       theModel.findAll(
       { where: { 
         [Op.or]: [
@@ -219,13 +232,33 @@ exports.update = function(req, resp) {
         }}).then(result => {
           var findRec = result;
           if(findRec.length > 0){
-            resp.json({ message: 'Username/Email Exists! please try another',status : 0,record: findRec }); 
+            resp.json({ message: variableDefined.variables.email_exists, status : 0,record: findRec }); 
             return;
           }
           if(!findRec.length){
             if(getData.password != undefined){
               var hashPassword = theContr.hashPassword(getData.password);
               if(hashPassword) getData.password = hashPassword;
+            }
+            //processing image
+            if(getApiImage != null){
+              // to declare some path to store your converted image
+              const path        = variableDefined.serverPath.userUploadDir + Date.now() + variableDefined.variables.user_picture_extension;
+              const imgdata     = getApiImage;
+              //const img = 'data:image/png;base64,aBdiVBORw0fKGgoAAA';
+              const bufferSize    = Buffer.from(imgdata.substring(imgdata.indexOf(',') + 1));
+              const bufferLength  = buffer.length;
+              const uploadSize    = buffer.length / 1e+6;
+              console.log("Byte length: " + buffer.length);
+              console.log("MB: " + buffer.length / 1e+6);
+              if(uploadSize != null && uploadSize >=1){
+                resp.json({ message: variableDefined.variables.image_upload_max_size, status : 0 });
+                return;
+              }
+              //
+              // to convert base64 format into random filename
+              const base64Data  = imgdata.replace(/^data:([A-Za-z-+/]+);base64,/, '');
+              fs.writeFileSync(path, base64Data,  {encoding: variableDefined.variables.user_picture_upload_encoding});
             }
             theModel.update(getData,
             {
@@ -234,11 +267,11 @@ exports.update = function(req, resp) {
               }
             }).then((result) => {
               if(result){
-                resp.json({ message: 'Record Updated!',status : result });
+                resp.json({ message: variableDefined.variables.record_updated, status : result });
                 return;
               }
               else
-                resp.json({ message: 'DB Update Error!',status : result });
+                resp.json({ message: variableDefined.variables.record_update_error, status : result });
                 return;
               })
           }
@@ -257,8 +290,8 @@ exports.delete = function(req, resp) {
     }
   }).then((result) => {
       if(result)
-        resp.json({ message: 'Record Deleted','status' : result });
+        resp.json({ message: variableDefined.variables.record_deleted,'status' : result });
       else
-        resp.json({ message: 'Record Already Deleted','status' : result });
+        resp.json({ message: variableDefined.variables.record_deleted_error,'status' : result });
   })
 };
