@@ -204,10 +204,11 @@ exports.create  = function(req, resp) {
 ------------------------------------*/
 exports.update = function(req, resp) {
   //Add required validation
-  var validReturn   = theContr.apiValidation(req, resp);
-  if(validReturn)   return;
+  //var validReturn   = theContr.apiValidation(req, resp);
+  //if(validReturn)   return;
 
-  console.log("Constants: ", variableDefined);
+  console.log('Check headers: ', req.headers, " :: ", req.method);
+  return false;
 
   var getData     = req.body || null;
   var getId       = req.body.id || 0;
@@ -231,6 +232,7 @@ exports.update = function(req, resp) {
           { [Op.ne] : getId}                        
         }}).then(result => {
           var findRec = result;
+          console.log("UserRec: ",findRec);
           if(findRec.length > 0){
             resp.json({ message: variableDefined.variables.email_exists, status : 0,record: findRec }); 
             return;
@@ -243,21 +245,23 @@ exports.update = function(req, resp) {
             //processing image
             if(getApiImage != null){
               // to declare some path to store your converted image
-              const path        = variableDefined.serverPath.userUploadDir + Date.now() + variableDefined.variables.user_picture_extension;
+              var fileName      = getId + "_" + getData.first_name + variableDefined.variables.user_picture_extension;
+
+              //old_filename    = Date.now() + variableDefined.variables.user_picture_extension
+              const path        = variableDefined.serverPath.userUploadDir + fileName.toString().trim();
               const imgdata     = getApiImage;
               //const img = 'data:image/png;base64,aBdiVBORw0fKGgoAAA';
               const bufferSize    = Buffer.from(imgdata.substring(imgdata.indexOf(',') + 1));
-              const bufferLength  = buffer.length;
-              const uploadSize    = buffer.length / 1e+6;
-              console.log("Byte length: " + buffer.length);
-              console.log("MB: " + buffer.length / 1e+6);
-              if(uploadSize != null && uploadSize >=1){
+              const bufferLength  = bufferSize.length;
+              const uploadSize    = bufferSize.length / 1e+6;
+              //console.log("Byte length: " + bufferSize.length);
+              //console.log("MB: " + bufferSize.length / 1e+6);
+              if(uploadSize != null && uploadSize >=2){
                 resp.json({ message: variableDefined.variables.image_upload_max_size, status : 0 });
                 return;
               }
-              //
               // to convert base64 format into random filename
-              const base64Data  = imgdata.replace(/^data:([A-Za-z-+/]+);base64,/, '');
+              const base64Data  = imgdata.replace(/^data:([A-Za-z-+/]+);base64,/, '');              
               fs.writeFileSync(path, base64Data,  {encoding: variableDefined.variables.user_picture_upload_encoding});
             }
             theModel.update(getData,

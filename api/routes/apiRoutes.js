@@ -13,7 +13,7 @@ function isAuth(req, res, next){
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     if(curSession.userRec ===  undefined ){
         res.json({message: variableDefined.variables.logged_out, status:0});
-    return;
+    return; // return undefined
     }
     return next();
 }
@@ -29,8 +29,8 @@ app.route('/login')
 app.route('/user')
     .get(isAuth, userController.getList)
     .delete(isAuth, userController.delete)
-    .post(userController.validate('create'),userController.create)  
-app.put('/user', isAuth, userController.validate('update'),userController.update);
+    .post(userController.validate('create'),isAuth,userController.create)  
+app.put('/user', isAuth, userController.validate('update'),userController.update);  //PUT requires a callback, write differently
 
 //-------------------- DO OTHER SECTION ---------------------------------
 

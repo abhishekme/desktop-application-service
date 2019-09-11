@@ -2,34 +2,20 @@
 
 const express           = require("express");
 const bodyParser        = require("body-parser");
-const db                = require("./api/models");
+//const db                = require("./api/models");    //use if needed
 var routes              = require('./api/routes/apiRoutes.js'); //importing route
-const expressValidator  = require('express-validator');
-
+//const expressValidator  = require('express-validator'); //use if needed
 const session           = require('express-session');
 const app               = express();
-const router            = express.Router();
+//const router            = express.Router(); //use if needed
 
 //Application session
 app.use(session({secret: 'scott-tiger'}));
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(express.static("app/public"));
+app.use(express.static("app/public"));  //use user upload section
 routes(app);
-// router.get("/user/:id",(req,res,next)=>{
-//     console.log('Request URL:', req.originalUrl)
-//     next()
-// },(req,res,next)=>{
-//     console.log('Request Type:', req.method)
-//     next()
-// },(req,res)=>{
-//     res.json({
-//         status:true,
-//         id:req.params.id
-//     })
-// })
-
 
 app.listen(8085, () => {
     console.log("App listening on port 8085");
