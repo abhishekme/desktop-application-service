@@ -3,7 +3,10 @@
 //Get ORM object
 var userController          = require('./user');
 var constants               = require('../../config/constants');
-var bCrypt                  = require('bcrypt-nodejs');
+//var bCrypt                  = require('bcrypt-nodejs');
+var bCrypt                  = require('bcrypt');
+var crypto                  = require('crypto');
+
 const { body,validationResult,check } = require('express-validator');
 const Sequelize             = require('sequelize');
 const Op                    = Sequelize.Op;
@@ -12,6 +15,9 @@ const theModel              = db.user;
 const theContr              = userController;
 const variableDefined       = constants[0].application;
 const fs                    = require('fs');
+var passCrypto              = require('../../config/passCrypto');
+
+var saltPassword = '';
 //-----------------------------------------------------------------------
 //---------------- API Required Field Validation ------------------------
 //-----------------------------------------------------------------------
@@ -26,7 +32,7 @@ exports.validate = (method) => {
         body('password')  
             .exists().withMessage(variableDefined.variables.password_required)
             .isLength({ min: 5, max:15 }).withMessage(variableDefined.variables.password_strength_step1)
-            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,}$/).withMessage(variableDefined.variables.password_strength_step2),
+            .matches(/^((?=.*\d)(?=.*[A-Z])(?=.*\W).{5,15})$/).withMessage(variableDefined.variables.password_strength_step2),
        ]   
     }
     case 'login' : {
@@ -43,11 +49,7 @@ exports.validate = (method) => {
          body('password')  
             .exists().withMessage(variableDefined.variables.password_required)
             .isLength({ min: 5, max:15 }).withMessage(variableDefined.variables.password_strength_step1)
-            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,}$/).withMessage(variableDefined.variables.password_strength_step2),
-        //  body('password', 'Password is required')
-        //     .isLength({min: 8, max:15})
-        //     .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d@$.!%*#?&]/)
-        //     .withMessage('Password should not be empty, minimum eight characters maximum fifteen, at least one letter, one number and one special character'),
+            .matches(/^((?=.*\d)(?=.*[A-Z])(?=.*\W).{5,15})$/).withMessage(variableDefined.variables.password_strength_step2),
          body('email', variableDefined.variables.email_required).exists().isEmail()
         ]   
      }
@@ -63,7 +65,7 @@ exports.apiValidation   = function(req,resp){
         validationErr.push(error);
       }      
   });
-  console.log(validationErr);
+  //console.log(validationErr);
   if(validationErr.length){
     validationErr.forEach(rec => {
        validationErrMesg.push({field: rec.param, message: rec.msg});
@@ -78,7 +80,52 @@ exports.apiValidation   = function(req,resp){
 //-----------------------******** END ********** ------------------------
 //-----------------------------------------------------------------------
 exports.hashPassword  = function(password){
-  return bCrypt.hashSync(password, bCrypt.genSaltSync(8), null);
+
+  // Creating a unique salt for a particular user 
+  saltPassword = crypto.randomBytes(16).toString('hex');  
+  // Hashing user's salt and password with 1000 iterations, 
+  //64 length and sha512 digest 
+  let hashPassword = crypto.pbkdf2Sync(password, saltPassword,  
+  1000, 64, `sha512`).toString(`hex`);
+  console.log('Passw: ', hashPassword);
+  return hashPassword;
+
+  //return bCrypt.hashSync(password, bCrypt.genSaltSync(10));
+  //const saltRounds = 10;
+  // let encryptPass = passCrypto.encrypt(password);
+  // console.log('pass: ', encryptPass);
+  // return JSON.stringify(encryptPass); 
+  // var getPass = await bCrypt.genSalt(saltRounds, function (err, salt) {
+  //   if (err) {
+  //     throw err
+  //   } else {
+  //     bCrypt.hash(password, salt, function(err, hash) {
+  //       if (err) {
+  //         throw err
+  //       } else {
+  //         console.log("---pass...",hash)
+  //         return hash;
+  //         //$2a$10$FEBywZh8u9M0Cec/0mWep.1kXrwKeiWDba6tdKvDfEBjyePJnDT7K
+  //       }
+  //     }) 
+  //   }
+  // });
+  // var getPass = bCrypt.hashSync(password, saltRounds);
+  // console.log('get pass: ', getPass);
+  // return getPass;
+  // bCrypt.hash(password, 10, function(err, hash) {
+  //   // Store hash in your password DB.
+  //   return hash;
+  // });
+  // console.log('req pass: ', password);
+  // let hash = bCrypt.hashSync(password, bCrypt.genSaltSync(10));
+  // console.log('db hash: ', hash);
+  // return hash;
+  // bCrypt.hash(password, 10).then(function(hash) {
+  //   // Store hash in your password DB.
+  //   console.log('db hash: ', hash);
+  //   return hash;
+  // });
 }
 exports.isLoggedIn  = function (req, res, next) {
       // if user is authenticated in the session, carry on 
@@ -119,7 +166,7 @@ exports.login  = function(req, resp){
           where: {
            email: postBody.email
          }
-        }).then(result => {
+        }).then(result => { 
             if(result === null || result === undefined){
               resp.json({ message: 'Email Not Exists!',status : 0 });
               return;
@@ -127,9 +174,9 @@ exports.login  = function(req, resp){
             if(result.dataValues.id > 0){
                var getRecord  = result;
                var dbPassword = getRecord.password;              
-               
-              if(!theModel.validPassword(postBody.password, dbPassword)){
-                resp.json({ message: 'Password wrong',status : 0 });
+               console.log("Pass: ", " -- ", dbPassword, " -- ",getRecord.salt );
+              if(!theModel.validPassword(dbPassword, postBody.password , getRecord.salt)){
+                resp.json({ message: 'Password Not Valid, Please check',status : 0 });
                 return;
               }
               var userRec = result.dataValues;
@@ -164,8 +211,9 @@ exports.create  = function(req, resp) {
   //Add required validation
   var validReturn   = theContr.apiValidation(req, resp);
   if(validReturn) return;
-
+  
   var getData   = req.body || null;
+  
   if(typeof getData === 'object'){
      var getEmail       = getData.email || '';
      var getUserName    = getData.username;
@@ -183,8 +231,12 @@ exports.create  = function(req, resp) {
             if(getData.password != undefined){
                var hashPassword = theContr.hashPassword(getData.password);
                if(hashPassword) getData.password = hashPassword;
+               if(req.body){
+                getData.salt = saltPassword;
+              }
+              console.log(">>> body ", getData);
             }
-            theModel.create(req.body).then((insertRecord) => {
+            theModel.create(getData).then((insertRecord) => {
               if(insertRecord.dataValues.id != undefined &&  insertRecord.dataValues.id > 0){
                 resp.json({ message: 'Record Inserted!',status : 1, record: insertRecord });
                 return;

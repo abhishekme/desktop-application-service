@@ -29,7 +29,7 @@ app.route('/login')
 app.route('/user')
     .get(isAuth, userController.getList)
     .delete(isAuth, userController.delete)
-    .post(userController.validate('create'),isAuth,userController.create)  
+    .post(userController.validate('create'), userController.create)  
 app.put('/user', isAuth, userController.validate('update'),userController.update);  //PUT requires a callback, write differently
 
 //-------------------- DO OTHER SECTION ---------------------------------

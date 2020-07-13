@@ -2,6 +2,8 @@
 
 const Promise = require("bluebird");
 const bcrypt = Promise.promisifyAll(require('bcrypt-nodejs'));
+var passCrypto  = require('../../config/passCrypto');
+var crypto                  = require('crypto');
 
 module.exports = (sequelize, DataTypes) => {
   
@@ -14,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       first_name: DataTypes.STRING,
       password: DataTypes.STRING,
+      salt: DataTypes.STRING,
       last_name: DataTypes.STRING,
       email: DataTypes.STRING,
       username: DataTypes.STRING,      
@@ -26,10 +29,44 @@ module.exports = (sequelize, DataTypes) => {
     });
 
   // checking if password is valid
-  User.validPassword = function(password, localPassword) {
-    return bcrypt.compareSync(password, localPassword);
+  User.validPassword = function(passwordHash, userPassword, dbSalt) {
+      let salt = dbSalt;//crypto.randomBytes(16).toString('hex');
+      var hashUser = crypto.pbkdf2Sync(userPassword, salt, 1000, 64, `sha512`).toString(`hex`); 
+      //console.log("DB Hash: ", passwordHash);
+      //console.log("Entered Hash: ", hashUser);
+      //console.log("check: ", hashUser === passwordHash);
+      return hashUser === passwordHash; 
+
+    //let hash = bcrypt.hashSync(userPassword, bcrypt.genSaltSync(10));
+    // let passObj = JSON.parse(passwordHash);
+    // console.log("ddd ", passObj, " -- ", passwordHash);
+    // let decryptPass = passCrypto.decrypt(passwordHash);
+    // console.log("decrypt ver: ", passObj);
+    // console.log('check: ',passwordHash," :: ", userPassword, " -- ");
+    // //check pass
+    // bcrypt.compare(userPassword, passwordHash, function(err, isMatch) {
+    //   if (err) {
+    //     throw err
+    //   } else if (!isMatch) {
+    //     console.log("Password doesn't match!")
+    //   } else {
+    //     console.log("Password matches!")
+    //   }
+    // })
+    // bcrypt.compare(userPassword, passwordHash, function(err, result) {
+    //   // result == true
+    //   console.log('result check: ',result);
+    //   return result
+    // });
+    // if(bcrypt.compareSync(userPassword, passwordHash)) {
+    //   // Passwords match
+    //   console.log('match pass');
+    //  } else {
+    //   console.log('not match pass');
+    //   // Passwords don't match
+    //  }
+    //return bcrypt.compareSync(password, localPassword);
  }
-  
  return User;
 
   //ORM Relations
