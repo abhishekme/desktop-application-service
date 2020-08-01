@@ -5,7 +5,7 @@ var userController          = require('./user');
 var constants               = require('../../config/constants');
 //var bCrypt                  = require('bcrypt-nodejs');
 var bCrypt                  = require('bcrypt');
-var crypto                  = require('crypto');
+var crypto                  = require('crypto'); 
 
 const { body,validationResult,check } = require('express-validator');
 const Sequelize             = require('sequelize');
@@ -16,8 +16,12 @@ const theContr              = userController;
 const variableDefined       = constants[0].application;
 const fs                    = require('fs');
 var passCrypto              = require('../../config/passCrypto');
+//return 
+const env = process.env.NODE_ENV || 'development';
+const config = require('../../config/config.json')[env];
 
 var saltPassword = '';
+const jwt = require("jsonwebtoken");
 //-----------------------------------------------------------------------
 //---------------- API Required Field Validation ------------------------
 //-----------------------------------------------------------------------
@@ -89,43 +93,6 @@ exports.hashPassword  = function(password){
   1000, 64, `sha512`).toString(`hex`);
   console.log('Passw: ', hashPassword);
   return hashPassword;
-
-  //return bCrypt.hashSync(password, bCrypt.genSaltSync(10));
-  //const saltRounds = 10;
-  // let encryptPass = passCrypto.encrypt(password);
-  // console.log('pass: ', encryptPass);
-  // return JSON.stringify(encryptPass); 
-  // var getPass = await bCrypt.genSalt(saltRounds, function (err, salt) {
-  //   if (err) {
-  //     throw err
-  //   } else {
-  //     bCrypt.hash(password, salt, function(err, hash) {
-  //       if (err) {
-  //         throw err
-  //       } else {
-  //         console.log("---pass...",hash)
-  //         return hash;
-  //         //$2a$10$FEBywZh8u9M0Cec/0mWep.1kXrwKeiWDba6tdKvDfEBjyePJnDT7K
-  //       }
-  //     }) 
-  //   }
-  // });
-  // var getPass = bCrypt.hashSync(password, saltRounds);
-  // console.log('get pass: ', getPass);
-  // return getPass;
-  // bCrypt.hash(password, 10, function(err, hash) {
-  //   // Store hash in your password DB.
-  //   return hash;
-  // });
-  // console.log('req pass: ', password);
-  // let hash = bCrypt.hashSync(password, bCrypt.genSaltSync(10));
-  // console.log('db hash: ', hash);
-  // return hash;
-  // bCrypt.hash(password, 10).then(function(hash) {
-  //   // Store hash in your password DB.
-  //   console.log('db hash: ', hash);
-  //   return hash;
-  // });
 }
 exports.isLoggedIn  = function (req, res, next) {
       // if user is authenticated in the session, carry on 
@@ -174,16 +141,22 @@ exports.login  = function(req, resp){
             if(result.dataValues.id > 0){
                var getRecord  = result;
                var dbPassword = getRecord.password;              
-               console.log("Pass: ", " -- ", dbPassword, " -- ",getRecord.salt );
+               //console.log("Pass: ", " -- ", dbPassword, " -- ",getRecord.salt );
               if(!theModel.validPassword(dbPassword, postBody.password , getRecord.salt)){
                 resp.json({ message: 'Password Not Valid, Please check',status : 0 });
                 return;
               }
               var userRec = result.dataValues;
               if(req.session != undefined){
-                var curSession  = req.session;
-                curSession.userRec = userRec;
-                resp.json({ message: 'Login success', status : 1});
+                //var curSession  = req.session;
+                //curSession.userRec = userRec;
+                let payload = {};
+                payload['id'] = userRec.id;
+                payload['email'] = userRec.email;
+                console.log("payload: ", payload);
+                let authToken = jwt.sign(payload, config.jwt_secret);
+                console.log("JWT: ", authToken);
+                resp.json({ message: 'Login success', authToken: authToken, status : 1});
               }
            }
         });

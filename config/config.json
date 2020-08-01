@@ -7,7 +7,8 @@
     "dialect" : "mysql",
     "strict"  : false,
     "port"    : 3306,
-    "operatorsAliases": false
+    "jwt_secret" : "scotttiger",
+    "operatorsAliases": false 
   },
   "production": {
     "username": "",
