@@ -1,22 +1,48 @@
+
 'use strict'
 
 const express           = require("express");
 const bodyParser        = require("body-parser");
-//const db                = require("./api/models");    //use if needed
+const cors              = require("cors");
 var routes              = require('./api/routes/apiRoutes.js'); //importing route
-//const expressValidator  = require('express-validator'); //use if needed
-const session           = require('express-session');
 const app               = express();
-//const router            = express.Router(); //use if needed
+const models            = require("./api/models/index");
+const jsonwebtoken      = require("jsonwebtoken");
+const formData          = require('express-form-data');
+const path              = require('path');
+const fileUpload        = require('express-fileupload');
+var corsOptions = {
+    origin: "http://localhost:4200"
+  };
 
-//Application session
-app.use(session({secret: 'scott-tiger'}));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-app.use(express.static("app/public"));  //use user upload section
+// Middleware function 
+app.use(fileUpload({
+  useTempFiles : false,
+  tempFileDir : path.join(__dirname,'tmp'),
+}));
+
+//Set token headers 
+app.use(function(req, res, next) {
+    if (req.headers && req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+      let token = req.headers.authorization.split(' ')[1];
+      let decoded = jsonwebtoken.decode(token);
+      req.user = decoded;
+      next();
+    } else {
+      req.user = undefined;
+      next();
+    }
+  });
+
+app.use('/public',express.static("/public"));  //Application upload section
 routes(app);
 
 app.listen(8085, () => {
     console.log("App listening on port 8085");
 });
+
+

@@ -1,27 +1,21 @@
 'use strict'
 
 const Promise   = require("bluebird");
-const bcrypt    = Promise.promisifyAll(require('bcrypt-nodejs'));
-var passCrypto  = require('../../config/passCrypto');
 var crypto      = require('crypto');
 
 module.exports = (sequelize, DataTypes) => {
   
-  const User = sequelize.define('user', {
+  const User = sequelize.define('applicationlogin', {
       id: {
         type: DataTypes.INTEGER(11),
         allowNull: true,
         primaryKey: true,
         autoIncrement: true
       },
-      first_name: DataTypes.STRING,
-      last_name: DataTypes.STRING,
-      //password: DataTypes.STRING,      
-      email: DataTypes.STRING,
-      //username: DataTypes.STRING,
-      mobile: DataTypes.STRING,
-      address: DataTypes.STRING,
-      user_avatar: DataTypes.STRING, 
+      login_password: DataTypes.STRING,
+      login_type: DataTypes.STRING,
+      login_name: DataTypes.STRING,
+      login_status: DataTypes.STRING,
     },
     {
       freezeTableName: true,

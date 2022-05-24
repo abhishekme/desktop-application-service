@@ -1,12 +1,12 @@
 {
   "development": {
     "username": "root",
-    "password": "123",
-    "database": "localdb",
+    "password": "",
+    "database": "application",
     "host"    : "localhost",
     "dialect" : "mysql",
     "strict"  : false,
-    "port"    : 3306,
+    "port"    : 3308,
     "jwt_secret" : "scotttiger",
     "operatorsAliases": false 
   },
