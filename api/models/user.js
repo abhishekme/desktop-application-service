@@ -7,8 +7,8 @@ var crypto      = require('crypto');
 
 module.exports = (sequelize, DataTypes) => {
   
-  const User = sequelize.define('user', {
-      id: {
+  const user = sequelize.define('user', {
+      id: { 
         type: DataTypes.INTEGER(11),
         allowNull: true,
         primaryKey: true,
@@ -28,12 +28,12 @@ module.exports = (sequelize, DataTypes) => {
     });
 
   // checking if password is valid
-  User.validPassword = function(passwordHash, userPassword, dbSalt) {
-      let salt = dbSalt;//crypto.randomBytes(16).toString('hex');
-      var hashUser = crypto.pbkdf2Sync(userPassword, salt, 1000, 64, `sha512`).toString(`hex`); 
-      return hashUser === passwordHash; 
- }
- return User;
+//   User.validPassword = function(passwordHash, userPassword, dbSalt) {
+//       let salt = dbSalt;//crypto.randomBytes(16).toString('hex');
+//       var hashUser = crypto.pbkdf2Sync(userPassword, salt, 1000, 64, `sha512`).toString(`hex`); 
+//       return hashUser === passwordHash; 
+//  }
+ return user;
 
   //ORM Relations
   // Post.associate = (models) => {

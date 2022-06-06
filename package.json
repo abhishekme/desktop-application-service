@@ -8,7 +8,7 @@
     "db:pre-migrate": "node create-db.js",
     "db:migrate": "npm run db:pre-migrate && node_modules/.bin/sequelize db:migrate",
     "sequelize-skeleton": "./node_modules/sequelize-cli/lib/sequelize init:models; ./node_modules/sequelize-cli/lib/sequelize init:config",
-    "init-db": "cd DIR_WHERE_MYSQL_BIN_IS && echo 'DROP DATABASE IF EXISTS local-server; CREATE DATABASE local-server CHARACTER SET utf8 COLLATE utf8_general_ci' | ./mysql -u root && cd -"
+    "init-db": "cd DIR_WHERE_MYSQL_BIN_IS && echo 'DROP DATABASE IF EXISTS application; CREATE DATABASE application CHARACTER SET utf8 COLLATE utf8_general_ci' | ./mysql -u root && cd -"
   },
   "author": "Abhishek",
   "license": "ISC",
@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "body-parser": "^1.19.0",
-    "express": "^4.17.1",
+    "express": "^4.18.1",
     "express-orm-mvc": "^1.1.0",
     "express-validator": "^6.1.1",
     "faker": "^4.1.0",

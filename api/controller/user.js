@@ -10,7 +10,7 @@ var bcrypt                  = require('bcrypt');
 var crypto                  = require('crypto'); 
 const path                  = require('path');
 const { body,validationResult,check } = require('express-validator');
-const Sequelize             = require('sequelize');
+const Sequelize             = require('sequelize'); 
 const Op                    = Sequelize.Op;
 const db                    = require('../models');
 const theModel              = db.user; 
@@ -27,7 +27,7 @@ const config = require('../../config/config.json')[env];
 var saltPassword = '';
 const jwt = require("jsonwebtoken");
 
-//console.log("Model: ", db, " ::LoginModel: ", theLoginModel);
+console.log( " ::UserModel: ", theModel);
 //return;
 
 //-----------------------------------------------------------------------
@@ -211,12 +211,13 @@ exports.createUser  = function(req, resp){
           [Op.or]: [{email: getEmail}, {mobile: getData.mobile}]
        }
       }).then(result => { 
+       // console.log("@Get user: ", result);
           if(result != null){
-            resp.json({ message: 'Duplicate User, Email/Mobile Exists!',status : 0 });
+            resp.json({ message: '@@@Duplicate User, Email/Mobile Exists!',status : 0 });
             return;
           }
           if(result === null){
-            console.log("@Creating User....3");
+            console.log("@Creating User....3", getData);
             theModel.create(getData).then(insertRecord => {
               let getRecord = insertRecord.dataValues;
               insertRecord = getRecord;
@@ -268,35 +269,41 @@ exports.createUser  = function(req, resp){
 /------------------------------------
 ------------------------------------*/
  exports.getUserList  =  (req, resp) =>{
-
-              if(req.query.op !== undefined && req.query.op == 'one'){
-                  let limit     = 1;                
-                  theModel.findAndCountAll(
-                    {
-                      limit: limit,
-                      order: [['id', 'DESC']]
-                    }
-                  ).then(userRecord => {
-                    //let totalPages = Math.ceil(totalCount / limit);
-                    resp.status(200).json({ message: 'User Lists',status : 1, data: userRecord.rows[0], totalCount: userRecord.count });
-                    return;
-                  }).catch(function (error) {
-                    resp.status(400).send('List Error: ', error);
-                  });
-              }
-              if(req.query.op !== undefined && req.query.op == 'all'){
-                    theModel.findAndCountAll(
-                      {
-                        order: [['id', 'DESC']]
-                      }
-                    ).then(userRecord => {
-                      console.log("@User List: ", userRecord);
-                      resp.status(200).json({ message: 'User Lists',status : 1, data: userRecord.rows, totalCount: userRecord.count });
-                      return;
-                    }).catch(function (error) {
-                      resp.status(400).send('List Error: ', error);
-                    });
-              }
+    let pg_limit     = 1; 
+    let offset       = 0;
+    if(req.query.op !== undefined && req.query.op == 'one'){                        
+        theModel.findAndCountAll(
+          {
+            limit: limit,
+            order: [['id', 'DESC']]
+          }
+        ).then(userRecord => {
+          resp.status(200).json({ message: 'User Lists',status : 1, data: userRecord.rows[0], totalCount: userRecord.count });
+          return;
+        }).catch(function (error) {
+          resp.status(400).send('List Error: ', error);
+          return;
+        });
+    }else if(req.query.op !== undefined && req.query.op == 'all'){
+          pg_limit = req.query.limit;
+          offset = 0 + (req.query.page - 1) * pg_limit;
+          theModel.findAndCountAll(
+            {
+              offset: offset,
+              limit: parseInt(pg_limit),
+              order: [['id', 'DESC']]
+            }
+          ).then(userRecord => {
+            resp.status(200).json({ message: 'User Lists',status : 1, data: userRecord.rows, totalCount: userRecord.count });
+            return;
+          }).catch(function (error) {
+            resp.status(400).send('List Error: ', error);
+            return;
+          });
+    }else{
+        resp.status(200).json({ message: 'Please check [op] parameter to be valid entry',status : 0 });
+        return;
+    }
 }
 
 //Get User By Mobile
