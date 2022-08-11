@@ -138,7 +138,7 @@ exports.apiValidation   = function(req,resp){
 }
 
 //Get testCategory By Mobile
-exports.searchByTestName  =  (req, resp)  =>{
+exports.searchByCategoryName  =  (req, resp)  =>{
   if(req.query.cat_name == undefined || req.query.cat_name == null){
       resp.status(400).json({ message: 'Parameter [cat_name] Not found.',status : 0 });
       return;

@@ -12,9 +12,6 @@ const theController         = testMasterController;
 const variableDefined       = constants[0].application;
 const env                   = process.env.NODE_ENV || 'development';
 
-//console.log("::TestCategory:: ", theModel);
-//return;
-//mmm
 
 //-----------------------------------------------------------------------
 //---------------- API Required Field Validation ------------------------
@@ -84,12 +81,12 @@ exports.apiValidation   = function(req,resp){
 
 //Add List with pagination limit
 /*-----------------------------------
-/-------------LIST testCategory-----------
+/---------LIST testCategory----------
 /---@body: NULL ---------------------
 /------------------------------------
 ------------------------------------*/
- exports.getList  =  (req, resp) =>{
-    let pg_limit     = 1; 
+exports.getList  =  (req, resp) =>{
+    let pg_limit     = 1;
     let offset       = 0;
 
     if(req.query.op !== undefined && req.query.op == 'one'){
@@ -99,7 +96,7 @@ exports.apiValidation   = function(req,resp){
             order: [['test_id', 'DESC']]
         }
         ).then(dataRecord => {
-            resp.status(200).json({ message: 'Test Category Lists',status : 1, data: dataRecord.rows[0], totalCount: dataRecord.count });
+            resp.status(200).json({ message: 'Test Master Lists',status : 1, data: dataRecord.rows[0], totalCount: dataRecord.count });
             return;
         }).catch(function (error) {
             resp.status(400).send({mesage:"List Error", error: error}); 
@@ -116,7 +113,7 @@ exports.apiValidation   = function(req,resp){
               order: [['test_id', 'DESC']]
             }
         ).then(dataRecord => {
-            resp.status(200).json({ message: 'Test Category Lists',status : 1, data: dataRecord.rows, totalCount: dataRecord.count });
+            resp.status(200).json({ message: 'Test Master Lists',status : 1, data: dataRecord.rows, totalCount: dataRecord.count });
             return;
         }).catch(function (error) {
           resp.status(400).send({mesage:"List Error", error: error}); 
@@ -130,7 +127,7 @@ exports.apiValidation   = function(req,resp){
           }
       ).then(dataRecord => {
           let totalPage   = Math.ceil(dataRecord.count / pg_limit);
-          resp.status(200).json({ message: 'Test Category Lists',status : 1, totalPage: totalPage, totalCount: dataRecord.count });
+          resp.status(200).json({ message: 'Test Master Lists',status : 1, totalPage: totalPage, totalCount: dataRecord.count });
           return;
       }).catch(function (error) {
         resp.status(400).send({mesage:"List Error", error: error}); 
@@ -165,15 +162,15 @@ exports.searchByTestName  =  (req, resp)  =>{
 }
 
 //Get testCategory By Category Short Name
-exports.searchByTestCategory  =  (req, resp)  =>{
-    if(req.query.test_cat_id == undefined){
-        resp.status(400).json({ message: 'Parameter [test_cat_id] Not found.',status : 0 });
+exports.searchByTestID  =  (req, resp)  =>{
+    if(req.query.test_id == undefined){
+        resp.status(400).json({ message: 'Parameter [test_id] Not found.',status : 0 });
         return;
     }  
-    let getCatID  =  req.query.test_cat_id || null;
+    let getCatID  =  req.query.test_id || null;
     theModel.findAll({
       where: {
-        test_cat_id: {
+        test_id: {
             [Op.eq]: getCatID
         }
       }
@@ -264,7 +261,7 @@ exports.create  = function(req, resp){
  * All model field data 
  * 
  */
- exports.update  = (req, resp, next) => {    
+exports.update  = (req, resp, next) => {    
 
   var validReturn   = theController.apiValidation(req, resp);
   if(validReturn) return;
@@ -286,13 +283,13 @@ exports.create  = function(req, resp){
   }
 
   if(typeof getData === 'object'){
-    if(getData.test_cat_id != '' && getData.test_name != '' && getData.test_amount != ''){
+    if(getData.test_name != '' && getData.test_amount != ''){
         theModel.findOne({
             where: {
                 test_name: getData.test_name,
-                test_cat_id : {
-                    [Op.eq]: getData.test_cat_id
-                },
+                // test_cat_id : {
+                //     [Op.eq]: getData.test_cat_id
+                // },
                 test_id : {
                     [Op.ne]: testMasterId
                 }

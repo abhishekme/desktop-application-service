@@ -1,5 +1,4 @@
-git remote set-url origin https://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@github.com/abhishekme/NodeServerSample.git
 
-git remote set-url origin https://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@github.com/abhishekme/desktop-application-service.git
+git remote set-url origin https://abhishekme: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@github.com/abhishekme/desktop-application-service.git
 
-git remote set-url origin https://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@github.com/abhishekme/desktop-application-angular.git
+git remote set-url origin https://abhishekme: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@github.com/abhishekme/desktop-application-angular.git

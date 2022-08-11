@@ -274,7 +274,7 @@ exports.createUser  = function(req, resp){
     if(req.query.op !== undefined && req.query.op == 'one'){                        
         theModel.findAndCountAll(
           {
-            limit: limit,
+            limit: pg_limit,
             order: [['id', 'DESC']]
           }
         ).then(userRecord => {
@@ -297,7 +297,7 @@ exports.createUser  = function(req, resp){
             resp.status(200).json({ message: 'User Lists',status : 1, data: userRecord.rows, totalCount: userRecord.count });
             return;
           }).catch(function (error) {
-            resp.status(400).send('List Error: ', error);
+            resp.status(401).send('List Error: ', error);
             return;
           });
     }else{

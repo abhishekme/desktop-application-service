@@ -10,7 +10,7 @@ module.exports = function(app) {
   //Routes
   //Welcome Application route
   app.get("/", function(req, res) {
-    res.send("Hello Node \_/");
+    res.send("Hello Node... \_/");
   });
 
     //REST API Routes
@@ -43,8 +43,8 @@ module.exports = function(app) {
       .delete(testMasterController.delete)
     app.route('/searchByTestName')
       .get(testMasterController.searchByTestName)
-    app.route('/searchByTestCategory')
-      .get(testMasterController.searchByTestCategory)
+    app.route('/searchByTestID')
+      .get(testMasterController.searchByTestID)
       
 
     //Test Category Route
@@ -53,8 +53,8 @@ module.exports = function(app) {
       .post(testCategoryController.validate('create'), testCategoryController.create)
       .put(testCategoryController.validate('update'),  testCategoryController.update)
       .delete(testCategoryController.delete)
-    app.route('/searchByTestName')
-      .get(testCategoryController.searchByTestName)
+    app.route('/searchByCategoryName')
+      .get(testCategoryController.searchByCategoryName)
     app.route('/searchByShortName')
       .get(testCategoryController.searchByShortName)    
     
